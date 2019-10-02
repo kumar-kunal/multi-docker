@@ -1,0 +1,25 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kumarkunal/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true kumarkunal/react-test npm test
+
+after_success:
+  - docker build -t kumarkunal/multi-client ./client
+  - docker build -t kumarkunal/multi-nginx ./nginx
+  - docker build -t kumarkunal/multi-server ./server
+  - docker build -t kumarkunal/multi-worker ./worker
+
+  # Login to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+
+  # Take those images and push them to docker hub
+  - docker push kumarkunal/multi-client
+  - docker push kumarkunal/multi-nginx
+  - docker push kumarkunal/multi-server
+  - docker push kumarkunal/multi-worker
